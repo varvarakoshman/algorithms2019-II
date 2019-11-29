@@ -3,11 +3,9 @@ package algorithms2019;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.openjdk.jmh.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,7 +22,10 @@ public class Graph {
      * @param target
      * @return shortest path from source to target
      */
-    public List<Integer> dijkstraAlgorithm(Integer source, Integer target) {
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Fork(value = 10, warmups = 2)
+    public List<Integer> dijkstraAlgorithm(final Integer source, final Integer target) {
         if (source.equals(target)) {
             return Collections.emptyList();
         }
@@ -32,7 +33,7 @@ public class Graph {
         List<Integer> notSptSet = new ArrayList<>();
         IntStream.range(0, adjMatrix.length).forEach(notSptSet::add);
         List<Integer> predecessors = new ArrayList<>(Collections.nCopies(adjMatrix.length, -1));
-        List<Integer> distances = new ArrayList<>(Collections.nCopies(adjMatrix.length, Integer.MAX_VALUE));
+        List<Integer> distances = new ArrayList<>(Collections.nCopies(adjMatrix.length, Integer.MAX_VALUE / 2));
         distances.set(source, 0); //set dist(source, source)=0
         while (sptSet.size() != adjMatrix.length) {
             Integer newVertex = notSptSet.stream()
@@ -47,7 +48,7 @@ public class Graph {
                 }
             });
         }
-        log.info(String.format("minimum distance from %d to %d is %d", source, target, distances.get(target)));
+        log.info(String.format("minimum distance from %d to %d with DA is %d", source, target, distances.get(target)));
         return unrollPath(predecessors, target);
     }
 
@@ -71,19 +72,42 @@ public class Graph {
                 .collect(Collectors.toList());
     }
 
-    // TODO: 11/26/2019 complete BFA
+    @Benchmark
+    @BenchmarkMode(Mode.AverageTime)
+    @Fork(value = 10, warmups = 2)
     public List<Integer> bellmanFordAlgorithm(Integer source, Integer target) {
-        List<Integer> distances = new ArrayList<>(Collections.nCopies(adjMatrix.length, Integer.MAX_VALUE));
+        List<Integer> distances = new ArrayList<>(Collections.nCopies(adjMatrix.length, Integer.MAX_VALUE / 2));
+        List<Integer> predecessors = new ArrayList<>(Collections.nCopies(adjMatrix.length, -1));
         distances.set(source, 0); //set dist(source, source)=0
-        //...
-        return null;
+        List<Edge> allEdges = getAllEdges();
+        for (int i = 0; i < adjMatrix.length - 1; i++) {
+            for (Edge edge : allEdges) {
+                if (distances.get(edge.getFrom()) + edge.getWeight() < distances.get(edge.getTo())) {
+                    distances.set(edge.getTo(), distances.get(edge.getFrom()) + edge.getWeight());
+                    predecessors.set(edge.getTo(), edge.getFrom());
+                }
+                // as graph is undirected, so check paths an edge in both directions
+                if (distances.get(edge.getTo()) + edge.getWeight() < distances.get(edge.getFrom())) {
+                    distances.set(edge.getFrom(), distances.get(edge.getTo()) + edge.getWeight());
+                    predecessors.set(edge.getFrom(), edge.getTo());
+                }
+            }
+        }
+        for (Edge edge : allEdges) { //the last walk through to find negative cycle
+            if (distances.get(edge.getFrom()) + edge.getWeight() < distances.get(edge.getTo())) {
+                log.warn("Negative weight cycle found");
+            }
+        }
+        log.info(String.format("minimum distance from %d to %d with BFA is %d", source, target, distances.get(target)));
+        return unrollPath(predecessors, target);
     }
 
+    // for visualization purposes
     public List<Edge> getAllEdges() {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < adjMatrix.length - 1; i++) {
             for (int j = i + 1; j < adjMatrix.length; j++) {
-                if (adjMatrix[i][j] != 0){
+                if (adjMatrix[i][j] != 0) {
                     edges.add(new Edge(i, j, adjMatrix[i][j]));
                 }
             }

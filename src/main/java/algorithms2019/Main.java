@@ -1,10 +1,18 @@
 package algorithms2019;
 
-import java.util.*;
+import lombok.SneakyThrows;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 
 
 public class Main {
-
+    private static final int N_VERTICES = 100;
+    private static final int N_EDGES = 2000;
+    private static final int source = new Random().nextInt(N_VERTICES);
+    private static final int target = new Random().nextInt(N_VERTICES);
     private static final int UPPER_BOUND = 100; // upper bound for weights in a graph
     /*
         as graph in task is undirected, its adjacency matrix is symmetric
@@ -39,15 +47,15 @@ public class Main {
         return adjMatrix;
     }
 
+    @SneakyThrows
     public static void main(String[] args) {
-        Random rnd = new Random();
-        Graph graph = new Graph(genRandomAdjMatrix(6, 5));
-        Integer vertex1 = rnd.nextInt(graph.getAdjMatrix().length);
-        Integer vertex2 = rnd.nextInt(graph.getAdjMatrix().length);
-        List<Integer> shortestPathDA = graph.dijkstraAlgorithm(vertex1, vertex2);
-        System.out.printf("shortest path between %d and %d is %s", vertex1, vertex2, shortestPathDA.toString());
+        org.openjdk.jmh.Main.main(args);
+        Graph graph = new Graph(genRandomAdjMatrix(N_VERTICES, N_EDGES));
+        List<Integer> shortestPathDA = graph.dijkstraAlgorithm(source, target);
+        System.out.printf("shortest path between %d and %d by DA is %s\n", source, target, shortestPathDA.toString());
         List<Edge> allEdges = graph.getAllEdges();
         Visualiser.drawGraph(graph.getAdjMatrix(), allEdges);
-        List<Integer> shortestPathBFA = graph.bellmanFordAlgorithm(vertex1, vertex2);
+        List<Integer> shortestPathBFA = graph.bellmanFordAlgorithm(source, target);
+        System.out.printf("shortest path between %d and %d by BFA is %s", source, target, shortestPathBFA.toString());
     }
 }
