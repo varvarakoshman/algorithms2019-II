@@ -1,10 +1,8 @@
-package algorithms2019;
+package algorithms2019.lab6.part1;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-/*
-class needed for visualisation
- */
+
 @AllArgsConstructor
 @Getter
 public class Edge {

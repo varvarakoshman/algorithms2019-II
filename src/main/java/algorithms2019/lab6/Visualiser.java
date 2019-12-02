@@ -1,5 +1,6 @@
-package algorithms2019;
+package algorithms2019.lab6;
 
+import algorithms2019.lab6.part1.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.MultiGraph;
 
